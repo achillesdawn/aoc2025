@@ -8,98 +8,51 @@ pub fn parse_input(s: &str) -> Vec<Vec<u32>> {
     lines
 }
 
-fn line_as_str(line: &[u32]) {
-    let s = line
-        .iter()
+fn line_to_str(line: &[u32]) -> String {
+    line.iter()
         .map(|i| i.to_string())
         .reduce(|acc, i| acc + &i)
-        .expect("could not convert line to string");
-
-    dbg!(s);
+        .expect("could not convert line to string")
 }
 
-// pub fn process_part_one(lines: Vec<Vec<u32>>) {
-//     let mut total = 0u32;
+fn arg_max(line: &[u32]) -> Option<(usize, u32)> {
+    let max = *line
+        .iter()
+        .max()
+        .expect("expected at least one element to calculate arg_max");
 
-//     for line in lines {
-//         let len = line.len();
-//         let mut max_indices: Vec<_> = Vec::new();
-
-//         let max = *line[..len - 1].iter().max().expect("expected a max number");
-
-//         for (index, value) in line.iter().enumerate() {
-//             if *value == max {
-//                 max_indices.push((index, value));
-//             }
-//         }
-
-//         line_as_str(&line);
-
-//         let mut nums = Vec::new();
-
-//         for (index, value) in max_indices.iter() {
-//             dbg!(index, max);
-//             let slice = &line[*index + 1..];
-
-//             let Some(local_max) = slice.iter().max() else {
-//                 continue;
-//             };
-
-//             let num = *value * 10 + *local_max;
-
-//             nums.push(num);
-//         }
-
-//         let result = nums.iter().max().expect("expected at least one num");
-
-//         total += result;
-//     }
-
-//     dbg!(total);
-// }
-
-fn process_line(line: &[u32]) -> u32 {
-    let len = line.len();
-
-    let mut max_indices: Vec<_> = Vec::new();
-
-    let max = *line[..len - 1].iter().max().expect("expected a max number");
-
-    for (index, value) in line.iter().enumerate() {
-        if *value == max {
-            max_indices.push((index, value));
+    for (i, n) in line.iter().enumerate() {
+        if *n == max {
+            return Some((i, *n));
         }
     }
 
-    line_as_str(line);
+    None
+}
 
-    let mut nums = Vec::new();
-
-    for (index, value) in max_indices.iter() {
-        dbg!(index, max);
-        let slice = &line[*index + 1..];
-
-        let Some(local_max) = slice.iter().max() else {
-            continue;
-        };
-
-        let num = *value * 10 + *local_max;
-
-        nums.push(num);
+fn recurse(line: &[u32], start: usize, end: usize, mut result: Vec<u32>) -> Vec<u32> {
+    if result.len() == 12 {
+        return result;
     }
 
-    let result = nums.iter().max().expect("expected at least one num");
+    let (i, n) = arg_max(&line[start..end]).expect("expected to find a max when calling arg_max");
 
-    *result
+    result.push(n);
+
+    recurse(line, start + i + 1, end + 1, result)
 }
 
 pub fn process(lines: Vec<Vec<u32>>) {
-    let mut total = 0u32;
+    let mut total = 0u64;
 
     for line in lines {
-        let result = process_line(&line);
+        let r = recurse(&line, 0, line.len() - 11, Vec::new());
 
-        total += result;
+        let s = line_to_str(&r);
+
+        let n: u64 = s.parse().expect("expected a parsable number");
+
+        total += n;
     }
 
     dbg!(total);
@@ -113,8 +66,7 @@ mod tests {
 
     #[test]
     fn test_one() {
-        let s = r#"
-            987654321111111
+        let s = r#"987654321111111
             811111111111119
             234234234234278
             818181911112111"#;
@@ -122,6 +74,23 @@ mod tests {
         let lines = parse_input(s);
 
         process(lines);
+    }
+
+    #[test]
+    fn test_line() {
+        let s = read_to_string("src/three/input.txt").expect("could not read input");
+
+        let lines = parse_input(&s);
+
+        let line = lines.get(2).unwrap();
+
+        let line_s = line_to_str(line);
+
+        let r = recurse(line, 0, line.len() - 11, Vec::new());
+
+        let r = line_to_str(&r);
+
+        dbg!(line_s, r);
     }
 
     #[test]
