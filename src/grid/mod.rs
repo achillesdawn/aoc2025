@@ -30,6 +30,10 @@ impl Grid {
         }
     }
 
+    pub fn set(&mut self, x: usize, y: usize, c: char) {
+        self.grid[y][x] = c;
+    }
+
     fn x_plus(&self, x: usize) -> Option<usize> {
         if x >= self.rows {
             return None;
