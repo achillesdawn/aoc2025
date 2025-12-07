@@ -1,11 +1,13 @@
 #[derive(Debug, Clone)]
-struct Operation {
-    items: Vec<u64>,
+pub struct Operation {
+    items: Vec<String>,
     operator: String,
 }
 
 pub fn parse_input(s: &str) -> Vec<Operation> {
     let l: Vec<Vec<&str>> = s.lines().map(|l| l.split_whitespace().collect()).collect();
+
+    dbg!(&l);
 
     let n_cols = l.first().unwrap().len();
 
@@ -21,15 +23,15 @@ pub fn parse_input(s: &str) -> Vec<Operation> {
         for i in 0..n_cols {
             let item = row[i];
 
-            dbg!(item);
-
-            result[i].items.push(item.parse().unwrap());
+            result[i].items.push(item.to_string());
         }
     }
 
     for (i, row) in l.last().unwrap().iter().enumerate() {
         result[i].operator = row.to_string();
     }
+
+    result.into_iter().map(|o| for i in o.items {});
 
     result
 }
@@ -76,7 +78,7 @@ mod tests {
               6 98  215 314
             *   +   *   +  ";
 
-        process(s);
+        parse_input(s);
     }
 
     #[test]
