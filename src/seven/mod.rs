@@ -12,8 +12,13 @@ fn recurse(grid: &mut Grid, x: usize, y: usize) {
 
         recurse(grid, new_x, new_y);
     } else if c == '^' {
+        grid.total += 1;
+
         recurse(grid, new_x + 1, y);
         recurse(grid, new_x - 1, y);
+    } else if c == '|' {
+    } else {
+        panic!("unexpected character");
     }
 }
 
@@ -25,6 +30,8 @@ pub fn parse_input(s: &str) {
     };
 
     recurse(&mut grid, x, y);
+
+    dbg!(grid.total);
 }
 
 #[cfg(test)]

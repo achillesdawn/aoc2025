@@ -5,6 +5,8 @@ pub use direction::Direction;
 #[derive(Debug)]
 pub struct Grid {
     grid: Vec<Vec<char>>,
+
+    pub total: usize,
     pub cols: usize,
     pub rows: usize,
 }
@@ -19,7 +21,12 @@ impl Grid {
         let cols = grid.len();
         let rows = grid[0].len();
 
-        Self { grid, cols, rows }
+        Self {
+            grid,
+            cols,
+            rows,
+            total: 0usize,
+        }
     }
 
     pub fn get_checked(&self, x: usize, y: usize) -> Option<char> {
@@ -30,7 +37,7 @@ impl Grid {
         }
     }
 
-    fn get_checked_with_coords(&self, x: usize, y: usize) -> Option<((char, (usize, usize)))> {
+    fn get_checked_with_coords(&self, x: usize, y: usize) -> Option<(char, (usize, usize))> {
         let c = self.get_checked(x, y)?;
 
         Some((c, (x, y)))
