@@ -1,6 +1,6 @@
 mod direction;
-
-use direction::Direction;
+mod find;
+pub use direction::Direction;
 
 #[derive(Debug)]
 pub struct Grid {
@@ -22,12 +22,20 @@ impl Grid {
         Self { grid, cols, rows }
     }
 
-    pub fn get(&self, x: usize, y: usize) -> Option<char> {
+    pub fn get_checked(&self, x: usize, y: usize) -> Option<char> {
         if (0..self.rows).contains(&x) && (0..self.cols).contains(&y) {
             Some(self.grid[y][x])
         } else {
             None
         }
+    }
+
+    fn get_unchecked(&self, x: usize, y: usize) -> char {
+        self.grid[y][x]
+    }
+
+    fn get_unchecked_with_coords(&self, x: usize, y: usize) -> (char, (usize, usize)) {
+        (self.get_unchecked(x, y), (x, y))
     }
 
     pub fn set(&mut self, x: usize, y: usize, c: char) {
@@ -54,7 +62,7 @@ impl Grid {
         x_or_y.checked_sub(1)
     }
 
-    pub fn get_direction_coords(
+    pub fn direction_coords(
         &self,
         x: usize,
         y: usize,
@@ -106,10 +114,21 @@ impl Grid {
         }
     }
 
-    pub fn get_at_direction(&self, x: usize, y: usize, direction: &Direction) -> Option<char> {
-        let (x, y) = self.get_direction_coords(x, y, direction)?;
+    pub fn get_direction(&self, x: usize, y: usize, direction: &Direction) -> Option<char> {
+        let (x, y) = self.direction_coords(x, y, direction)?;
 
-        self.get(x, y)
+        Some(self.get_unchecked(x, y))
+    }
+
+    pub fn get_direction_with_coords(
+        &self,
+        x: usize,
+        y: usize,
+        direction: &Direction,
+    ) -> Option<(char, (usize, usize))> {
+        let (x, y) = self.direction_coords(x, y, direction)?;
+
+        Some(self.get_unchecked_with_coords(x, y))
     }
 
     pub fn get_all_directions(&self, x: usize, y: usize) -> Vec<char> {
@@ -118,7 +137,7 @@ impl Grid {
         let directions = Direction::items();
 
         for direction in directions {
-            if let Some(c) = self.get_at_direction(x, y, &direction) {
+            if let Some(c) = self.get_direction(x, y, &direction) {
                 results.push(c);
             }
         }
