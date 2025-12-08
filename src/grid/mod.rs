@@ -30,6 +30,12 @@ impl Grid {
         }
     }
 
+    fn get_checked_with_coords(&self, x: usize, y: usize) -> Option<((char, (usize, usize)))> {
+        let c = self.get_checked(x, y)?;
+
+        Some((c, (x, y)))
+    }
+
     fn get_unchecked(&self, x: usize, y: usize) -> char {
         self.grid[y][x]
     }
@@ -38,7 +44,7 @@ impl Grid {
         (self.get_unchecked(x, y), (x, y))
     }
 
-    pub fn set(&mut self, x: usize, y: usize, c: char) {
+    pub fn set_unchecked(&mut self, x: usize, y: usize, c: char) {
         self.grid[y][x] = c;
     }
 
@@ -128,7 +134,7 @@ impl Grid {
     ) -> Option<(char, (usize, usize))> {
         let (x, y) = self.direction_coords(x, y, direction)?;
 
-        Some(self.get_unchecked_with_coords(x, y))
+        self.get_checked_with_coords(x, y)
     }
 
     pub fn get_all_directions(&self, x: usize, y: usize) -> Vec<char> {
@@ -143,5 +149,18 @@ impl Grid {
         }
 
         results
+    }
+
+    pub fn print_grid(&self) {
+        for y in 0..self.cols {
+            for x in 0..self.rows {
+                let c = self.get_unchecked(x, y);
+                print!("{}", c);
+            }
+
+            println!();
+        }
+
+        println!()
     }
 }
