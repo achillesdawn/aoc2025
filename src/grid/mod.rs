@@ -8,7 +8,7 @@ pub use direction::Direction;
 pub struct Grid {
     grid: Vec<Vec<char>>,
 
-    pub paths: HashSet<Vec<(usize, usize)>>,
+    pub paths: HashSet<Vec<u8>>,
 
     pub cols: usize,
     pub rows: usize,
