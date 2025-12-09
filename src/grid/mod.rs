@@ -10,6 +10,7 @@ pub struct Grid {
 
     pub paths: HashSet<Vec<u8>>,
 
+    pub total: usize,
     pub cols: usize,
     pub rows: usize,
 }
@@ -28,6 +29,7 @@ impl Grid {
             grid,
             cols,
             rows,
+            total: 0usize,
             paths: HashSet::new(),
         }
     }
