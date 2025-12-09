@@ -1,12 +1,15 @@
 mod direction;
 mod find;
+use std::collections::HashSet;
+
 pub use direction::Direction;
 
 #[derive(Debug)]
 pub struct Grid {
     grid: Vec<Vec<char>>,
 
-    pub total: usize,
+    pub paths: HashSet<Vec<(usize, usize)>>,
+
     pub cols: usize,
     pub rows: usize,
 }
@@ -25,7 +28,7 @@ impl Grid {
             grid,
             cols,
             rows,
-            total: 0usize,
+            paths: HashSet::new(),
         }
     }
 

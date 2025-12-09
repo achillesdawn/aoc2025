@@ -1,22 +1,36 @@
 use crate::grid::{Direction, Grid};
 
-fn recurse(grid: &mut Grid, x: usize, y: usize) {
+fn recurse(grid: &mut Grid, x: usize, y: usize, path: Vec<(usize, usize)>) {
     let Some((c, (new_x, new_y))) = grid.get_direction_with_coords(x, y, &Direction::Down) else {
+        if !grid.paths.contains(&path) {
+            println!("inserting path: {:?}", path);
+            grid.paths.insert(path);
+        } else {
+            println!("path already contained: {:?}", path);
+        }
+
         return;
     };
 
-    if c == '.' {
+    if c == '.' || c == '|' {
         grid.set_unchecked(new_x, new_y, '|');
 
         grid.print_grid();
 
-        recurse(grid, new_x, new_y);
+        recurse(grid, new_x, new_y, path);
     } else if c == '^' {
-        grid.total += 1;
+        let mut new_path = path.clone();
 
-        recurse(grid, new_x + 1, y);
-        recurse(grid, new_x - 1, y);
-    } else if c == '|' {
+        new_path.push((new_x + 1, y));
+
+        recurse(grid, new_x + 1, y, new_path);
+
+        let mut new_path = path.clone();
+
+        new_path.push((new_x - 1, y));
+
+        recurse(grid, new_x - 1, y, new_path);
+    // } else if c == '|' {
     } else {
         panic!("unexpected character");
     }
@@ -29,9 +43,9 @@ pub fn parse_input(s: &str) {
         panic!("could not find start location");
     };
 
-    recurse(&mut grid, x, y);
+    recurse(&mut grid, x, y, Vec::new());
 
-    dbg!(grid.total);
+    dbg!(grid.paths.len());
 }
 
 #[cfg(test)]
