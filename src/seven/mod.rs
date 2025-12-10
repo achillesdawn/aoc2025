@@ -1,8 +1,14 @@
 use crate::grid::{Direction, Grid};
 
-fn recurse(grid: &mut Grid, x: usize, y: usize) {
+#[derive(Debug, Default)]
+struct RecurseState {
+    total: usize,
+    visited: usize,
+}
+
+fn recurse(grid: &mut Grid, state: &mut RecurseState, x: usize, y: usize) {
     let Some((c, (new_x, new_y))) = grid.get_direction_with_coords(x, y, &Direction::Down) else {
-        grid.total += 1;
+        state.total += 1;
         return;
     };
 
@@ -11,11 +17,12 @@ fn recurse(grid: &mut Grid, x: usize, y: usize) {
 
         grid.print_grid();
 
-        recurse(grid, new_x, new_y);
+        recurse(grid, state, new_x, new_y);
     } else if c == '^' {
-        recurse(grid, new_x + 1, y);
-        recurse(grid, new_x - 1, y);
+        recurse(grid, state, new_x + 1, y);
+        recurse(grid, state, new_x - 1, y);
     } else if c == '|' {
+        state.visited += 1;
     } else {
         panic!("unexpected character");
     }
@@ -28,11 +35,13 @@ pub fn parse_input(s: &str) {
         panic!("could not find start location");
     };
 
-    recurse(&mut grid, x, y);
+    let mut state = RecurseState::default();
+
+    recurse(&mut grid, &mut state, x, y);
 
     grid.print_grid();
 
-    dbg!(grid.total);
+    dbg!(state);
 }
 
 #[cfg(test)]

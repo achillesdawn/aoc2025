@@ -1,6 +1,5 @@
 mod direction;
 mod find;
-use std::collections::HashSet;
 
 pub use direction::Direction;
 
@@ -8,9 +7,6 @@ pub use direction::Direction;
 pub struct Grid {
     grid: Vec<Vec<char>>,
 
-    pub paths: HashSet<Vec<u8>>,
-
-    pub total: usize,
     pub cols: usize,
     pub rows: usize,
 }
@@ -25,13 +21,7 @@ impl Grid {
         let cols = grid.len();
         let rows = grid[0].len();
 
-        Self {
-            grid,
-            cols,
-            rows,
-            total: 0usize,
-            paths: HashSet::new(),
-        }
+        Self { grid, cols, rows }
     }
 
     pub fn get_checked(&self, x: usize, y: usize) -> Option<char> {
