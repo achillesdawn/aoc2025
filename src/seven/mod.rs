@@ -1,32 +1,7 @@
-use crate::grid::{Direction, Grid};
+use crate::grid::Grid;
 
-#[derive(Debug, Default)]
-struct RecurseState {
-    total: usize,
-    visited: usize,
-}
-
-fn recurse(grid: &mut Grid, state: &mut RecurseState, x: usize, y: usize) {
-    let Some((c, (new_x, new_y))) = grid.get_direction_with_coords(x, y, &Direction::Down) else {
-        state.total += 1;
-        return;
-    };
-
-    if c == '.' {
-        grid.set_unchecked(new_x, new_y, '|');
-
-        grid.print_grid();
-
-        recurse(grid, state, new_x, new_y);
-    } else if c == '^' {
-        recurse(grid, state, new_x + 1, y);
-        recurse(grid, state, new_x - 1, y);
-    } else if c == '|' {
-        state.visited += 1;
-    } else {
-        panic!("unexpected character");
-    }
-}
+mod recursive;
+use recursive::{RecurseState, recurse_to_depth};
 
 pub fn parse_input(s: &str) {
     let mut grid = Grid::new(s);
@@ -35,9 +10,9 @@ pub fn parse_input(s: &str) {
         panic!("could not find start location");
     };
 
-    let mut state = RecurseState::default();
+    let mut state = RecurseState::new(3);
 
-    recurse(&mut grid, &mut state, x, y);
+    recurse_to_depth(&mut grid, &mut state, x, y, 0);
 
     grid.print_grid();
 
@@ -81,6 +56,9 @@ mod tests {
 ......^.^......
 ...............
 .....^.^.^.....
+...............
+....^.^...^....
+...............
 ...............";
 
         parse_input(s);
