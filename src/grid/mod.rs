@@ -1,5 +1,6 @@
 mod direction;
 mod find;
+mod rows;
 
 pub use direction::Direction;
 
@@ -11,6 +12,7 @@ pub struct Grid {
     pub rows: usize,
 }
 
+#[allow(dead_code)]
 impl Grid {
     pub fn new(s: &str) -> Self {
         let grid: Vec<Vec<char>> = s

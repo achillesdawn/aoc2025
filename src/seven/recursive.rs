@@ -1,5 +1,9 @@
 use std::collections::BTreeMap;
 
+mod up;
+
+pub use up::recurse_up_aided;
+
 use crate::grid::{Direction, Grid};
 
 #[derive(Debug, Default)]
@@ -80,4 +84,24 @@ pub fn recurse(grid: &mut Grid, state: &mut RecurseState, x: usize, y: usize) {
     }
 }
 
-pub fn recurse_up_aided(grid: &mut Grid, state: &mut RecurseState, x: usize, y: usize) {}
+pub fn recurse_once(grid: &mut Grid, state: &mut RecurseState, x: usize, y: usize) {
+    let Some((c, (new_x, new_y))) = grid.get_direction_with_coords(x, y, &Direction::Down) else {
+        state.total += 1;
+        return;
+    };
+
+    if c == '.' {
+        grid.set_unchecked(new_x, new_y, '|');
+
+        recurse_once(grid, state, new_x, new_y);
+    } else if c == '^' {
+        grid.set_unchecked(new_x + 1, new_y, '|');
+        recurse_once(grid, state, new_x + 1, new_y);
+
+        grid.set_unchecked(new_x - 1, new_y, '|');
+        recurse_once(grid, state, new_x - 1, new_y);
+    } else if c == '|' {
+    } else {
+        panic!("unexpected character");
+    }
+}
