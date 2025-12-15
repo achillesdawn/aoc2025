@@ -1,6 +1,8 @@
+use std::collections::HashSet;
+
 use kdtree::{KdTree, distance::squared_euclidean};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Edge {
     distance: f32,
     from: usize,
@@ -25,15 +27,17 @@ pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
 }
 
 pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) {
-    let mut edges: Vec<(usize, usize)> = Vec::new();
+    let mut edges: Vec<Edge> = Vec::new();
+
+    let mut connected: HashSet<usize> = HashSet::new();
 
     let mut nearest: Vec<Edge> = Vec::new();
 
     for (idx, point) in points.iter().enumerate() {
-        let r = kd.nearest(point, 2, &squared_euclidean).unwrap();
+        let r = kd.nearest(point, 10, &squared_euclidean).unwrap();
 
         let edges: Vec<Edge> = r[1..]
-            .into_iter()
+            .iter()
             .map(|(d, to)| Edge {
                 distance: *d,
                 from: idx,
@@ -46,7 +50,23 @@ pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>)
 
     nearest.sort_by(|a, b| a.distance.total_cmp(&b.distance));
 
-    dbg!(nearest);
+    for edge in nearest.iter() {
+        if connected.contains(&edge.to) && connected.contains(&edge.from) {
+            continue;
+        }
+
+        // connect
+        connected.insert(edge.to);
+        connected.insert(edge.from);
+
+        edges.push(edge.clone());
+
+        if edges.len() > 10 {
+            break;
+        }
+    }
+
+    dbg!(edges);
 }
 
 #[cfg(test)]
