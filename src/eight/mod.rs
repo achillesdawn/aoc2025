@@ -1,6 +1,8 @@
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use kdtree::{KdTree, distance::squared_euclidean};
+
+mod part_one;
 
 #[derive(Debug, Clone)]
 struct Edge {
@@ -26,10 +28,13 @@ pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
     (kd, points)
 }
 
-fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
+fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
     let mut nearest: Vec<Edge> = Vec::new();
 
     for (idx, point) in points.iter().enumerate() {
+        kd.remove(point, &idx)
+            .expect("could not remove data from kdtree");
+
         let r = kd
             .nearest(point, 1000, &squared_euclidean)
             .expect("could not calculate nearest points in kd tree");
@@ -51,83 +56,53 @@ fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<
     nearest
 }
 
-fn connect_edges(nearest: Vec<Edge>, num_connections: usize) {
-    let mut edges: Vec<Edge> = Vec::new();
-    let mut edge_set: HashSet<(usize, usize)> = HashSet::new();
-    let mut island_count = 0usize;
-    let mut islands: BTreeMap<usize, usize> = BTreeMap::new();
-    let mut connection_count = 0usize;
+fn count_islands(islands: &HashMap<usize, usize>) -> usize {
+    let mut unique = HashSet::new();
+
+    for island in islands.values() {
+        unique.insert(*island);
+    }
+
+    unique.len()
+}
+
+fn connect_all(nearest: Vec<Edge>) {
+    let mut islands: HashMap<usize, usize> = HashMap::new();
+    let mut current_island = 0usize;
 
     for edge in nearest.iter() {
-        if edge_set.contains(&(edge.to, edge.from)) || edge_set.contains(&(edge.from, edge.to)) {
-            continue;
-        }
-
-        edge_set.insert((edge.to, edge.from));
-        edge_set.insert((edge.from, edge.to));
-
-        connection_count += 1;
-
-        if connection_count - 1 == num_connections {
-            break;
-        }
-
-        if let Some(first) = islands.get(&edge.to)
-            && let Some(second) = islands.get(&edge.from)
+        if let Some(from) = islands.get(&edge.from)
+            && let Some(to) = islands.get(&edge.to)
         {
-            // copy to drop borrowed islands
-            let first = *first;
-            let second = *second;
+            let from = *from;
+            let to = *to;
 
-            dbg!(edge, first, second);
-
-            if first == second {
-                println!("already in same group");
+            if from == to {
                 continue;
-            } else {
-                dbg!(&islands);
-                println!("joining {} to {}", second, first);
-
-                let mut n = 0usize;
-                // join groups
-                for value in islands.values_mut() {
-                    if *value == second {
-                        n += 1;
-                        *value = first;
-                    }
-                }
-
-                println!("changed {}", n);
             }
-        } else if let Some(island_idx) = islands.get(&edge.to) {
-            islands.insert(edge.from, *island_idx);
+            // connect
+
+            for island in islands.values_mut() {
+                if *island == from {
+                    *island = to;
+                }
+            }
         } else if let Some(island_idx) = islands.get(&edge.from) {
             islands.insert(edge.to, *island_idx);
+        } else if let Some(island_idx) = islands.get(&edge.to) {
+            islands.insert(edge.from, *island_idx);
         } else {
-            islands.insert(edge.to, island_count);
-            islands.insert(edge.from, island_count);
-            island_count += 1;
+            islands.insert(edge.to, current_island);
+            islands.insert(edge.from, current_island);
+
+            current_island += 1;
         }
 
-        edges.push(edge.clone());
+        let count = count_islands(&islands);
+
+        dbg!(&islands);
+        dbg!(&count);
     }
-
-    dbg!(edges);
-    dbg!(&islands);
-
-    let mut counts: HashMap<usize, usize> = HashMap::new();
-
-    for value in islands.values() {
-        counts.entry(*value).and_modify(|e| *e += 1).or_insert(1);
-    }
-
-    dbg!(&counts);
-
-    let mut counts: Vec<_> = counts.values().collect();
-
-    counts.sort();
-
-    dbg!(counts);
 }
 
 #[cfg(test)]
@@ -163,7 +138,7 @@ mod tests {
 
         let edges = find_nearest(kd, points);
 
-        connect_edges(edges, 10);
+        connect_all(edges);
     }
 
     #[test]
@@ -174,6 +149,6 @@ mod tests {
 
         let edges = find_nearest(kd, points);
 
-        connect_edges(edges, 1000);
+        connect_all(edges);
     }
 }
