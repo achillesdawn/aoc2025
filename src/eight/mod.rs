@@ -26,7 +26,7 @@ pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
     (kd, points)
 }
 
-pub fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
+fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
     let mut nearest: Vec<Edge> = Vec::new();
 
     for (idx, point) in points.iter().enumerate() {
@@ -68,7 +68,7 @@ fn connect_edges(nearest: Vec<Edge>, num_connections: usize) {
 
         connection_count += 1;
 
-        if connection_count == num_connections {
+        if connection_count - 1 == num_connections {
             break;
         }
 
