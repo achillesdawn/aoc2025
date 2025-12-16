@@ -3,13 +3,10 @@ use std::collections::{BTreeMap, HashMap};
 use kdtree::{KdTree, distance::squared_euclidean};
 
 #[derive(Debug, Clone)]
-struct Edge<'a> {
+struct Edge {
     distance: f32,
     from: usize,
     to: usize,
-
-    from_coords: &'a [f32; 3],
-    to_coords: &'a [f32; 3],
 }
 
 pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
@@ -33,8 +30,6 @@ pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>)
     let mut nearest: Vec<Edge> = Vec::new();
 
     for (idx, point) in points.iter().enumerate() {
-        let from_coords = points.get(idx).unwrap();
-
         kd.remove(point, &idx).unwrap();
 
         let r = kd
@@ -43,17 +38,10 @@ pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>)
 
         let edges: Vec<Edge> = r
             .iter()
-            .map(|(d, to)| {
-                let to_coords = points.get(**to).unwrap();
-
-                Edge {
-                    distance: *d,
-                    from: idx,
-                    to: **to,
-
-                    from_coords,
-                    to_coords,
-                }
+            .map(|(d, to)| Edge {
+                distance: *d,
+                from: idx,
+                to: **to,
             })
             .collect();
 
@@ -67,7 +55,6 @@ pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>)
 
 fn connect_edges(nearest: Vec<Edge>) {
     let mut edges: Vec<Edge> = Vec::new();
-
     let mut island_count = 1usize;
     let mut islands: BTreeMap<usize, usize> = BTreeMap::new();
     let mut connection_count = 0u8;
@@ -88,15 +75,12 @@ fn connect_edges(nearest: Vec<Edge>) {
                 println!("already in same group");
                 continue;
             } else {
-                dbg!(&islands);
-
+                // join groups
                 for value in islands.values_mut() {
                     if *value == first {
                         *value = second;
                     }
                 }
-
-                dbg!(&islands);
             }
         } else if let Some(island_idx) = islands.get(&edge.to) {
             islands.insert(edge.from, *island_idx);
@@ -120,8 +104,8 @@ fn connect_edges(nearest: Vec<Edge>) {
 
     let mut counts: HashMap<usize, usize> = HashMap::new();
 
-    for (key, value) in islands {
-        counts.entry(value).and_modify(|e| *e += 1).or_insert(1);
+    for value in islands.values() {
+        counts.entry(*value).and_modify(|e| *e += 1).or_insert(1);
     }
 
     dbg!(counts);
