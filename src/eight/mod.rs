@@ -26,10 +26,8 @@ pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
     (kd, points)
 }
 
-pub fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) {
+pub fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
     let mut nearest: Vec<Edge> = Vec::new();
-
-    println!("finding nearest");
 
     for (idx, point) in points.iter().enumerate() {
         let r = kd
@@ -50,15 +48,15 @@ pub fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) {
 
     nearest.sort_by(|a, b| a.distance.total_cmp(&b.distance));
 
-    connect_edges(nearest);
+    nearest
 }
 
-fn connect_edges(nearest: Vec<Edge>) {
+fn connect_edges(nearest: Vec<Edge>, num_connections: usize) {
     let mut edges: Vec<Edge> = Vec::new();
     let mut edge_set: HashSet<(usize, usize)> = HashSet::new();
     let mut island_count = 0usize;
     let mut islands: BTreeMap<usize, usize> = BTreeMap::new();
-    let mut connection_count = 0u32;
+    let mut connection_count = 0usize;
 
     for edge in nearest.iter() {
         if edge_set.contains(&(edge.to, edge.from)) || edge_set.contains(&(edge.from, edge.to)) {
@@ -70,7 +68,7 @@ fn connect_edges(nearest: Vec<Edge>) {
 
         connection_count += 1;
 
-        if connection_count == 1000 {
+        if connection_count == num_connections {
             break;
         }
 
@@ -123,6 +121,12 @@ fn connect_edges(nearest: Vec<Edge>) {
         counts.entry(*value).and_modify(|e| *e += 1).or_insert(1);
     }
 
+    dbg!(&counts);
+
+    let mut counts: Vec<_> = counts.values().collect();
+
+    counts.sort();
+
     dbg!(counts);
 }
 
@@ -157,7 +161,9 @@ mod tests {
 
         let (kd, points) = parse(s);
 
-        find_nearest(kd, points);
+        let edges = find_nearest(kd, points);
+
+        connect_edges(edges, 10);
     }
 
     #[test]
@@ -166,6 +172,8 @@ mod tests {
 
         let (kd, points) = parse(&s);
 
-        find_nearest(kd, points);
+        let edges = find_nearest(kd, points);
+
+        connect_edges(edges, 1000);
     }
 }
