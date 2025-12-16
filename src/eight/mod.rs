@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use kdtree::{KdTree, distance::squared_euclidean};
 
@@ -26,17 +26,17 @@ pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
     (kd, points)
 }
 
-pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) {
+pub fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) {
     let mut nearest: Vec<Edge> = Vec::new();
 
-    for (idx, point) in points.iter().enumerate() {
-        kd.remove(point, &idx).unwrap();
+    println!("finding nearest");
 
+    for (idx, point) in points.iter().enumerate() {
         let r = kd
-            .nearest(point, 10, &squared_euclidean)
+            .nearest(point, 1000, &squared_euclidean)
             .expect("could not calculate nearest points in kd tree");
 
-        let edges: Vec<Edge> = r
+        let edges: Vec<Edge> = r[1..]
             .iter()
             .map(|(d, to)| Edge {
                 distance: *d,
@@ -55,11 +55,19 @@ pub fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>)
 
 fn connect_edges(nearest: Vec<Edge>) {
     let mut edges: Vec<Edge> = Vec::new();
-    let mut island_count = 1usize;
+    let mut edge_set: HashSet<(usize, usize)> = HashSet::new();
+    let mut island_count = 0usize;
     let mut islands: BTreeMap<usize, usize> = BTreeMap::new();
-    let mut connection_count = 0u8;
+    let mut connection_count = 0u32;
 
     for edge in nearest.iter() {
+        if edge_set.contains(&(edge.to, edge.from)) || edge_set.contains(&(edge.from, edge.to)) {
+            continue;
+        }
+
+        edge_set.insert((edge.to, edge.from));
+        edge_set.insert((edge.from, edge.to));
+
         connection_count += 1;
 
         if let Some(first) = islands.get(&edge.to)
@@ -75,12 +83,18 @@ fn connect_edges(nearest: Vec<Edge>) {
                 println!("already in same group");
                 continue;
             } else {
+                println!("joining {} to {}", second, first);
+
+                let mut n = 0usize;
                 // join groups
                 for value in islands.values_mut() {
-                    if *value == first {
-                        *value = second;
+                    if *value == second {
+                        n += 1;
+                        *value = first;
                     }
                 }
+
+                println!("changed {}", n);
             }
         } else if let Some(island_idx) = islands.get(&edge.to) {
             islands.insert(edge.from, *island_idx);
@@ -94,8 +108,10 @@ fn connect_edges(nearest: Vec<Edge>) {
 
         edges.push(edge.clone());
 
-        if connection_count == 10 {
+        if connection_count == 1000 {
             break;
+        } else if connection_count > 950 {
+            println!("hello")
         }
     }
 
@@ -113,6 +129,8 @@ fn connect_edges(nearest: Vec<Edge>) {
 
 #[cfg(test)]
 mod tests {
+    use std::fs::read_to_string;
+
     use super::*;
 
     #[test]
@@ -139,6 +157,15 @@ mod tests {
 425,690,689";
 
         let (kd, points) = parse(s);
+
+        find_nearest(kd, points);
+    }
+
+    #[test]
+    fn with_input() {
+        let s = read_to_string("src/eight/input.txt").expect("could not read eight/input.txt");
+
+        let (kd, points) = parse(&s);
 
         find_nearest(kd, points);
     }
