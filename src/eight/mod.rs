@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use kdtree::{KdTree, distance::squared_euclidean};
 
-mod part_one;
+// mod part_one;
 
 #[derive(Debug, Clone)]
 struct Edge {
@@ -32,14 +32,14 @@ fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> 
     let mut nearest: Vec<Edge> = Vec::new();
 
     for (idx, point) in points.iter().enumerate() {
-        kd.remove(point, &idx)
-            .expect("could not remove data from kdtree");
+        // kd.remove(point, &idx)
+        //     .expect("could not remove data from kdtree");
 
         let r = kd
             .nearest(point, 1000, &squared_euclidean)
             .expect("could not calculate nearest points in kd tree");
 
-        let edges: Vec<Edge> = r[1..]
+        let edges: Vec<Edge> = r
             .iter()
             .map(|(d, to)| Edge {
                 distance: *d,
@@ -66,11 +66,11 @@ fn count_islands(islands: &HashMap<usize, usize>) -> usize {
     unique.len()
 }
 
-fn connect_all(nearest: Vec<Edge>) {
+fn connect_all(nearest: Vec<Edge>, points: Vec<[f32; 3]>) {
     let mut islands: HashMap<usize, usize> = HashMap::new();
     let mut current_island = 0usize;
 
-    for edge in nearest.iter() {
+    for (n, edge) in nearest.iter().enumerate() {
         if let Some(from) = islands.get(&edge.from)
             && let Some(to) = islands.get(&edge.to)
         {
@@ -80,12 +80,26 @@ fn connect_all(nearest: Vec<Edge>) {
             if from == to {
                 continue;
             }
-            // connect
 
+            // connect
+            println!("connecting: {} to {} edge: {:?}", to, from, edge);
             for island in islands.values_mut() {
-                if *island == from {
-                    *island = to;
+                if *island == to {
+                    *island = from;
                 }
+            }
+
+            dbg!(&islands);
+
+            let count = count_islands(&islands);
+
+            if count == 1 {
+                let from_point = points.get(edge.from);
+                let to_point = points.get(edge.to);
+
+                dbg!(edge, from_point, to_point);
+
+                break;
             }
         } else if let Some(island_idx) = islands.get(&edge.from) {
             islands.insert(edge.to, *island_idx);
@@ -97,12 +111,9 @@ fn connect_all(nearest: Vec<Edge>) {
 
             current_island += 1;
         }
-
-        let count = count_islands(&islands);
-
-        dbg!(&islands);
-        dbg!(&count);
     }
+
+    dbg!(islands);
 }
 
 #[cfg(test)]
@@ -136,9 +147,9 @@ mod tests {
 
         let (kd, points) = parse(s);
 
-        let edges = find_nearest(kd, points);
+        let edges = find_nearest(kd, points.clone());
 
-        connect_all(edges);
+        connect_all(edges, points);
     }
 
     #[test]
@@ -147,8 +158,8 @@ mod tests {
 
         let (kd, points) = parse(&s);
 
-        let edges = find_nearest(kd, points);
+        let edges = find_nearest(kd, points.clone());
 
-        connect_all(edges);
+        connect_all(edges, points);
     }
 }
