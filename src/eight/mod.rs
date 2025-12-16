@@ -70,6 +70,10 @@ fn connect_edges(nearest: Vec<Edge>) {
 
         connection_count += 1;
 
+        if connection_count == 1000 {
+            break;
+        }
+
         if let Some(first) = islands.get(&edge.to)
             && let Some(second) = islands.get(&edge.from)
         {
@@ -83,6 +87,7 @@ fn connect_edges(nearest: Vec<Edge>) {
                 println!("already in same group");
                 continue;
             } else {
+                dbg!(&islands);
                 println!("joining {} to {}", second, first);
 
                 let mut n = 0usize;
@@ -107,12 +112,6 @@ fn connect_edges(nearest: Vec<Edge>) {
         }
 
         edges.push(edge.clone());
-
-        if connection_count == 1000 {
-            break;
-        } else if connection_count > 950 {
-            println!("hello")
-        }
     }
 
     dbg!(edges);
