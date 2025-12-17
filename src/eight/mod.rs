@@ -5,7 +5,7 @@ use kdtree::{KdTree, distance::squared_euclidean};
 // mod part_one;
 
 #[derive(Debug, Clone)]
-struct Edge {
+pub struct Edge {
     distance: f32,
     from: usize,
     to: usize,
@@ -28,7 +28,7 @@ pub fn parse(s: &str) -> (KdTree<f32, usize, [f32; 3]>, Vec<[f32; 3]>) {
     (kd, points)
 }
 
-fn find_nearest(mut kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
+pub fn find_nearest(kd: KdTree<f32, usize, [f32; 3]>, points: Vec<[f32; 3]>) -> Vec<Edge> {
     let mut nearest: Vec<Edge> = Vec::new();
 
     for (idx, point) in points.iter().enumerate() {
@@ -66,11 +66,11 @@ fn count_islands(islands: &HashMap<usize, usize>) -> usize {
     unique.len()
 }
 
-fn connect_all(nearest: Vec<Edge>, points: Vec<[f32; 3]>) {
+pub fn connect_all(nearest: Vec<Edge>, points: Vec<[f32; 3]>) -> f32 {
     let mut islands: HashMap<usize, usize> = HashMap::new();
     let mut current_island = 0usize;
 
-    for (n, edge) in nearest.iter().enumerate() {
+    for edge in nearest.iter() {
         if let Some(from) = islands.get(&edge.from)
             && let Some(to) = islands.get(&edge.to)
         {
@@ -89,17 +89,18 @@ fn connect_all(nearest: Vec<Edge>, points: Vec<[f32; 3]>) {
                 }
             }
 
-            dbg!(&islands);
-
             let count = count_islands(&islands);
 
             if count == 1 {
-                let from_point = points.get(edge.from);
-                let to_point = points.get(edge.to);
+                let from_point = points.get(edge.from).unwrap();
+                let to_point = points.get(edge.to).unwrap();
+
+                let x_from = from_point.first().unwrap();
+                let x_to = to_point.first().unwrap();
 
                 dbg!(edge, from_point, to_point);
 
-                break;
+                return x_to * x_from;
             }
         } else if let Some(island_idx) = islands.get(&edge.from) {
             islands.insert(edge.to, *island_idx);
@@ -113,7 +114,7 @@ fn connect_all(nearest: Vec<Edge>, points: Vec<[f32; 3]>) {
         }
     }
 
-    dbg!(islands);
+    panic!("did not find answer");
 }
 
 #[cfg(test)]
@@ -149,7 +150,9 @@ mod tests {
 
         let edges = find_nearest(kd, points.clone());
 
-        connect_all(edges, points);
+        let result = connect_all(edges, points);
+
+        assert_eq!(result, 25272.);
     }
 
     #[test]
@@ -160,6 +163,8 @@ mod tests {
 
         let edges = find_nearest(kd, points.clone());
 
-        connect_all(edges, points);
+        let result = connect_all(edges, points);
+
+        dbg!(result);
     }
 }
