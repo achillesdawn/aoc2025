@@ -2,6 +2,8 @@ mod direction;
 mod find;
 mod rows;
 
+use std::str::FromStr;
+
 pub use direction::Direction;
 
 #[derive(Debug)]
@@ -12,9 +14,10 @@ pub struct Grid {
     pub rows: usize,
 }
 
-#[allow(dead_code)]
-impl Grid {
-    pub fn new(s: &str) -> Self {
+impl FromStr for Grid {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
         let grid: Vec<Vec<char>> = s
             .lines()
             .map(|line| line.trim().chars().collect())
@@ -23,7 +26,20 @@ impl Grid {
         let cols = grid.len();
         let rows = grid[0].len();
 
-        Self { grid, cols, rows }
+        Ok(Self { grid, cols, rows })
+    }
+}
+
+#[allow(dead_code)]
+impl Grid {
+    pub fn new(x: usize, y: usize) -> Self {
+        let grid = vec![vec!['.'; x]; y];
+
+        Self {
+            grid,
+            cols: y,
+            rows: x,
+        }
     }
 
     pub fn get_checked(&self, x: usize, y: usize) -> Option<char> {
