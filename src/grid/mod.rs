@@ -171,7 +171,7 @@ impl Grid {
         results
     }
 
-    pub fn print_grid(&self) {
+    pub fn print(&self) {
         for y in 0..self.cols {
             for x in 0..self.rows {
                 let c = self.get_unchecked(x, y);
