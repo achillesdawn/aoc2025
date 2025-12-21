@@ -1,5 +1,11 @@
 use crate::grid::Grid;
 
+#[derive(Debug)]
+pub struct Wall {
+    pub head: (isize, isize),
+    pub tail: (isize, isize),
+}
+
 pub fn parse(s: &str) -> Vec<(isize, isize)> {
     s.lines()
         .map(|l| l.split_once(',').unwrap())
@@ -38,40 +44,13 @@ fn iterate(positions: Vec<(isize, isize)>) -> isize {
     max_area
 }
 
-// fn positions_min_max(positions: &[(isize, isize)]) -> (isize, isize, isize, isize) {
-//     let mut x_min = isize::MAX;
-//     let mut x_max = 0isize;
-//     let mut y_min = isize::MAX;
-//     let mut y_max = 0isize;
-
-//     for (x, y) in positions.iter() {
-//         if *x < x_min {
-//             x_min = *x;
-//         }
-//         if *x > x_max {
-//             x_max = *x;
-//         }
-
-//         if *y < y_min {
-//             y_min = *y;
-//         }
-//         if *y > y_max {
-//             y_max = *y;
-//         }
-//     }
-
-//     (x_min, x_max, y_min, y_max)
-// }
-
-fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) {
+fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) -> Wall {
     let delta_x = position.0 - last.0;
     let delta_y = position.1 - last.1;
 
     if delta_y == 0 && delta_x == 0 {
         panic!("expected delta x or delta y to be zero");
     } else if delta_x != 0 {
-        println!("setting direction");
-
         let direction = delta_x > 0;
 
         for i in 1..delta_x.abs() {
@@ -82,8 +61,6 @@ fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) 
             }
         }
     } else if delta_y != 0 {
-        dbg!(delta_y);
-
         let direction = delta_y > 0;
 
         for i in 1..delta_y.abs() {
@@ -93,12 +70,21 @@ fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) 
                 grid.set_unchecked((last.0) as usize, (last.1 - i) as usize, '+');
             }
         }
+    } else {
+        panic!("unexpected case interpolation");
+    }
+
+    Wall {
+        head: position,
+        tail: last,
     }
 }
 fn create_grid(positions: Vec<(isize, isize)>) {
     let mut grid = Grid::new(14, 9);
 
     let mut last: (isize, isize) = (0, 0);
+
+    let mut walls = Vec::new();
 
     for (i, (x, y)) in positions.iter().enumerate() {
         grid.set_unchecked(*x as usize, *y as usize, '#');
@@ -108,7 +94,9 @@ fn create_grid(positions: Vec<(isize, isize)>) {
             continue;
         }
 
-        interpolate(&mut grid, (*x, *y), last);
+        let wall = interpolate(&mut grid, (*x, *y), last);
+
+        walls.push(wall);
 
         grid.print();
 
@@ -116,6 +104,8 @@ fn create_grid(positions: Vec<(isize, isize)>) {
     }
 
     grid.print();
+
+    dbg!(walls);
 }
 
 #[cfg(test)]
