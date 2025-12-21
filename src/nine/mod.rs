@@ -103,6 +103,13 @@ fn create_grid(positions: Vec<(isize, isize)>) {
         last = (*x, *y);
     }
 
+    let first = *positions.first().expect("expected at least one position");
+    let last = *positions.last().expect("expected last");
+
+    let wall = interpolate(&mut grid, first, last);
+
+    walls.push(wall);
+
     grid.print();
 
     dbg!(walls);
