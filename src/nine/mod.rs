@@ -21,7 +21,7 @@ fn calc_area(pos: &(isize, isize), other: &(isize, isize)) -> isize {
     dim_a * dim_b
 }
 
-fn iterate(positions: Vec<(isize, isize)>) -> isize {
+pub fn part_one(positions: Vec<(isize, isize)>) -> isize {
     let mut max_area = 0isize;
 
     let mut max_pos = &(0isize, 0isize);
@@ -53,22 +53,32 @@ fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) 
     } else if delta_x != 0 {
         let direction = delta_x > 0;
 
+        let y = last.1 as usize;
+        let c = 'X';
+
         for i in 1..delta_x.abs() {
-            if direction {
-                grid.set_unchecked((last.0 + i) as usize, last.1 as usize, '+');
+            let x = if direction {
+                (last.0 + i) as usize
             } else {
-                grid.set_unchecked((last.0 - i) as usize, last.1 as usize, '+');
-            }
+                (last.0 - i) as usize
+            };
+
+            grid.set_unchecked(x, y, c);
         }
     } else if delta_y != 0 {
         let direction = delta_y > 0;
 
+        let x = last.0 as usize;
+        let c = 'X';
+
         for i in 1..delta_y.abs() {
-            if direction {
-                grid.set_unchecked((last.0) as usize, (last.1 + i) as usize, '+');
+            let y = if direction {
+                (last.1 + i) as usize
             } else {
-                grid.set_unchecked((last.0) as usize, (last.1 - i) as usize, '+');
-            }
+                (last.1 - i) as usize
+            };
+
+            grid.set_unchecked(x, y, c);
         }
     } else {
         panic!("unexpected case interpolation");
@@ -79,7 +89,7 @@ fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) 
         tail: last,
     }
 }
-fn create_grid(positions: Vec<(isize, isize)>) {
+pub fn create_grid(positions: Vec<(isize, isize)>) {
     let mut grid = Grid::new(14, 9);
 
     let mut last: (isize, isize) = (0, 0);
@@ -151,6 +161,6 @@ mod tests {
 
         let positions = parse(&s);
 
-        iterate(positions);
+        part_one(positions);
     }
 }
