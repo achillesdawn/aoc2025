@@ -1,3 +1,5 @@
+use crate::grid::Grid;
+
 pub fn parse(s: &str) -> Vec<(isize, isize)> {
     s.lines()
         .map(|l| l.split_once(',').unwrap())
@@ -61,15 +63,60 @@ fn iterate(positions: Vec<(isize, isize)>) -> isize {
 //     (x_min, x_max, y_min, y_max)
 // }
 
-// fn create_grid(positions: Vec<(isize, isize)>) {
-//     let mut grid = Grid::new(14, 9);
+fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) {
+    let delta_x = position.0 - last.0;
+    let delta_y = position.1 - last.1;
 
-//     for (x, y) in positions {
-//         grid.set_unchecked(x as usize, y as usize, '#');
-//     }
+    if delta_y == 0 && delta_x == 0 {
+        panic!("expected delta x or delta y to be zero");
+    } else if delta_x != 0 {
+        println!("setting direction");
 
-//     grid.print();
-// }
+        let direction = delta_x > 0;
+
+        for i in 1..delta_x.abs() {
+            if direction {
+                grid.set_unchecked((last.0 + i) as usize, last.1 as usize, '+');
+            } else {
+                grid.set_unchecked((last.0 - i) as usize, last.1 as usize, '+');
+            }
+        }
+    } else if delta_y != 0 {
+        dbg!(delta_y);
+
+        let direction = delta_y > 0;
+
+        for i in 1..delta_y.abs() {
+            if direction {
+                grid.set_unchecked((last.0) as usize, (last.1 + i) as usize, '+');
+            } else {
+                grid.set_unchecked((last.0) as usize, (last.1 - i) as usize, '+');
+            }
+        }
+    }
+}
+fn create_grid(positions: Vec<(isize, isize)>) {
+    let mut grid = Grid::new(14, 9);
+
+    let mut last: (isize, isize) = (0, 0);
+
+    for (i, (x, y)) in positions.iter().enumerate() {
+        grid.set_unchecked(*x as usize, *y as usize, '#');
+
+        if i == 0 {
+            last = (*x, *y);
+            continue;
+        }
+
+        interpolate(&mut grid, (*x, *y), last);
+
+        grid.print();
+
+        last = (*x, *y);
+    }
+
+    grid.print();
+}
 
 #[cfg(test)]
 mod tests {
@@ -91,9 +138,7 @@ mod tests {
 
         let positions = parse(s);
 
-        let area = iterate(positions);
-
-        assert_eq!(area, 50);
+        create_grid(positions);
     }
 
     #[test]
