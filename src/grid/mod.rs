@@ -42,7 +42,7 @@ impl Grid {
         }
     }
 
-    pub fn get_checked(&self, x: usize, y: usize) -> Option<char> {
+    pub fn get(&self, x: usize, y: usize) -> Option<char> {
         if (0..self.rows).contains(&x) && (0..self.cols).contains(&y) {
             Some(self.grid[y][x])
         } else {
@@ -51,7 +51,7 @@ impl Grid {
     }
 
     fn get_checked_with_coords(&self, x: usize, y: usize) -> Option<(char, (usize, usize))> {
-        let c = self.get_checked(x, y)?;
+        let c = self.get(x, y)?;
 
         Some((c, (x, y)))
     }

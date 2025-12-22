@@ -1,128 +1,24 @@
-use crate::grid::Grid;
+use geo::{Line, LineIntersection, Point, line_intersection};
 
-#[derive(Debug)]
-pub struct Wall {
-    pub head: (isize, isize),
-    pub tail: (isize, isize),
-}
-
-pub fn parse(s: &str) -> Vec<(isize, isize)> {
+pub fn parse(s: &str) -> Vec<Point> {
     s.lines()
         .map(|l| l.split_once(',').unwrap())
         .map(|(first, second)| (first.trim(), second.trim()))
-        .map(|(first, second)| (first.parse().unwrap(), second.parse().unwrap()))
+        .map(|(first, second)| (first.parse().unwrap(), second.parse().unwrap()).into())
         .collect()
 }
 
-fn calc_area(pos: &(isize, isize), other: &(isize, isize)) -> isize {
-    let dim_a = (pos.1 - other.1).abs() + 1;
-    let dim_b = (other.0 - pos.0).abs() + 1;
+fn intersection(
+    line1_point1: Point,
+    line1_point2: Point,
+    line2_point1: Point,
+    line2_point2: Point,
+) -> Option<LineIntersection<f64>> {
+    let line1 = Line::new(line1_point1, line1_point2);
 
-    dim_a * dim_b
-}
+    let line_2 = Line::new(line2_point1, line2_point2);
 
-pub fn part_one(positions: Vec<(isize, isize)>) -> isize {
-    let mut max_area = 0isize;
-
-    let mut max_pos = &(0isize, 0isize);
-    let mut max_other = &(0isize, 0isize);
-
-    for pos in positions.iter() {
-        for other in positions.iter() {
-            let area = calc_area(pos, other);
-
-            if area > max_area {
-                max_area = area;
-                max_pos = pos;
-                max_other = other;
-            }
-        }
-    }
-
-    dbg!(max_area, max_other, max_pos);
-
-    max_area
-}
-
-fn interpolate(grid: &mut Grid, position: (isize, isize), last: (isize, isize)) -> Wall {
-    let delta_x = position.0 - last.0;
-    let delta_y = position.1 - last.1;
-
-    if delta_y == 0 && delta_x == 0 {
-        panic!("expected delta x or delta y to be zero");
-    } else if delta_x != 0 {
-        let direction = delta_x > 0;
-
-        let y = last.1 as usize;
-        let c = 'X';
-
-        for i in 1..delta_x.abs() {
-            let x = if direction {
-                (last.0 + i) as usize
-            } else {
-                (last.0 - i) as usize
-            };
-
-            grid.set_unchecked(x, y, c);
-        }
-    } else if delta_y != 0 {
-        let direction = delta_y > 0;
-
-        let x = last.0 as usize;
-        let c = 'X';
-
-        for i in 1..delta_y.abs() {
-            let y = if direction {
-                (last.1 + i) as usize
-            } else {
-                (last.1 - i) as usize
-            };
-
-            grid.set_unchecked(x, y, c);
-        }
-    } else {
-        panic!("unexpected case interpolation");
-    }
-
-    Wall {
-        head: position,
-        tail: last,
-    }
-}
-pub fn create_grid(positions: Vec<(isize, isize)>) {
-    let mut grid = Grid::new(14, 9);
-
-    let mut last: (isize, isize) = (0, 0);
-
-    let mut walls = Vec::new();
-
-    for (i, (x, y)) in positions.iter().enumerate() {
-        grid.set_unchecked(*x as usize, *y as usize, '#');
-
-        if i == 0 {
-            last = (*x, *y);
-            continue;
-        }
-
-        let wall = interpolate(&mut grid, (*x, *y), last);
-
-        walls.push(wall);
-
-        grid.print();
-
-        last = (*x, *y);
-    }
-
-    let first = *positions.first().expect("expected at least one position");
-    let last = *positions.last().expect("expected last");
-
-    let wall = interpolate(&mut grid, first, last);
-
-    walls.push(wall);
-
-    grid.print();
-
-    dbg!(walls);
+    line_intersection::line_intersection(line1, line_2)
 }
 
 #[cfg(test)]
@@ -130,29 +26,45 @@ mod tests {
 
     use std::fs::read_to_string;
 
+    use tracing::info;
+
     use super::*;
 
-    #[test]
-    fn case_one() {
-        let s = "7,1
-11,1
-11,7
-9,7
-9,5
-2,5
-2,3
-7,3";
-
-        let positions = parse(s);
-
-        create_grid(positions);
+    fn init_tracing() {
+        tracing_subscriber::fmt()
+            .with_max_level(tracing::Level::DEBUG)
+            .with_test_writer()
+            .init();
     }
 
     #[test]
-    fn test_area() {
-        let area = calc_area(&(2, 5), &(11, 1));
+    fn case_one() {
+        init_tracing();
 
-        assert_eq!(area, 50);
+        let s = "7,1
+            11,1
+            11,7
+            9,7
+            9,5
+            2,5
+            2,3
+            7,3";
+
+        let positions = parse(s);
+
+        info!(?positions);
+    }
+
+    #[test]
+    fn intersections() {
+        init_tracing();
+
+        intersection(
+            (11., 1.).into(),
+            (2., 3.).into(),
+            (7., 1.).into(),
+            (7., 3.).into(),
+        );
     }
 
     #[test]
@@ -160,7 +72,5 @@ mod tests {
         let s = read_to_string("src/nine/input.txt").unwrap();
 
         let positions = parse(&s);
-
-        part_one(positions);
     }
 }
