@@ -1,4 +1,6 @@
-use tracing::{error, info};
+use std::{collections::HashSet, ops::BitXor};
+
+use tracing::{debug, debug_span, error, info, info_span, warn};
 
 mod machine;
 
@@ -88,6 +90,47 @@ fn parse(s: &str) -> Vec<Machine> {
         .collect()
 }
 
+fn process_machine(machine: Machine) {
+    const MAX_DEPTH: usize = 10usize;
+    let mut results: HashSet<u16> = HashSet::from_iter(machine.masks.clone());
+
+    let span = debug_span!("target", target = machine.state);
+    let _guard = span.enter();
+    let mut steps = 2usize;
+
+    warn!("start");
+
+    for _ in 0..MAX_DEPTH {
+        let new_results: Vec<u16> = machine
+            .masks
+            .iter()
+            .flat_map(|button| {
+                let temp: Vec<u16> = results.iter().map(|v| *button ^ *v).collect();
+                temp
+            })
+            .collect();
+
+        debug!(?new_results);
+
+        if new_results.contains(&machine.state) {
+            break;
+        } else {
+            steps += 1;
+            results.extend(new_results);
+        }
+
+        debug!(?results);
+    }
+
+    debug!(?results, steps);
+}
+
+fn main(machines: Vec<Machine>) {
+    for machine in machines.into_iter() {
+        process_machine(machine);
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -117,8 +160,10 @@ mod tests {
 
         let machines = parse(s);
 
-        for machine in machines {
+        for machine in machines.iter() {
             println!("{}", machine);
         }
+
+        main(machines);
     }
 }
