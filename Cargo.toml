@@ -5,15 +5,14 @@ edition = "2024"
 
 [dependencies]
 eyre = "0.6.12"
-
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["chrono"] }
 
 # eight
 # kdtree = "0.8.0"
 
 #nine
-geo = "0.32.0"
-tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.22", features = ["chrono"] }
+# geo = "0.32.0"
 
 # [profile.test]
 # codegen-units = 1

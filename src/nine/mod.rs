@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use geo::{Area, Intersects, Line, Point, Rect, Scale};
+use geo::{Intersects, Line, Point, Rect, Scale};
 use tracing::info;
 
 pub fn parse(s: &str) -> Vec<Point> {
@@ -19,6 +19,7 @@ fn calc_area(pos: &Point, other: &Point) -> f64 {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct RectArea {
     area: f64,
     points: (Point, Point),
@@ -64,8 +65,6 @@ pub fn main(points: Vec<Point>) {
                     continue 'outer;
                 }
             }
-
-            // let area = rect.signed_area();
 
             let area = calc_area(first, second);
 
