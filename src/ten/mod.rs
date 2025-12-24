@@ -1,9 +1,7 @@
-use std::{collections::HashSet, ops::BitXor};
-
-use tracing::{debug, debug_span, error, info, info_span, warn};
+use std::collections::HashSet;
+use tracing::{debug, debug_span, error, info, warn};
 
 mod machine;
-
 use machine::Machine;
 
 fn parse_state(s: &str) -> u16 {
@@ -61,7 +59,7 @@ fn parse_buttons(s: &str) -> Vec<u16> {
     masks
 }
 
-fn parse(s: &str) -> Vec<Machine> {
+pub fn parse(s: &str) -> Vec<Machine> {
     s.trim()
         .lines()
         .map(|l| {
@@ -90,13 +88,22 @@ fn parse(s: &str) -> Vec<Machine> {
         .collect()
 }
 
-fn process_machine(machine: Machine) {
-    const MAX_DEPTH: usize = 10usize;
+fn process_machine(machine: Machine) -> usize {
+    // check if steps are 0 or 1
+    if machine.state == 0 {
+        return 0;
+    } else if machine.masks.contains(&machine.state) {
+        return 1;
+    }
+
+    let mut steps = 2usize;
     let mut results: HashSet<u16> = HashSet::from_iter(machine.masks.clone());
 
-    let span = debug_span!("target", target = machine.state);
+    const MAX_DEPTH: usize = 10usize;
+    let mut found = false;
+
+    let span = debug_span!("proc", target = machine.state);
     let _guard = span.enter();
-    let mut steps = 2usize;
 
     warn!("start");
 
@@ -110,9 +117,8 @@ fn process_machine(machine: Machine) {
             })
             .collect();
 
-        debug!(?new_results);
-
         if new_results.contains(&machine.state) {
+            found = true;
             break;
         } else {
             steps += 1;
@@ -122,13 +128,23 @@ fn process_machine(machine: Machine) {
         debug!(?results);
     }
 
+    if !found {
+        panic!("not found in MAX_STEPS");
+    }
+
     debug!(?results, steps);
+
+    steps
 }
 
-fn main(machines: Vec<Machine>) {
+pub fn main(machines: Vec<Machine>) -> usize {
+    let mut result = 0usize;
+
     for machine in machines.into_iter() {
-        process_machine(machine);
+        result += process_machine(machine);
     }
+
+    result
 }
 
 #[cfg(test)]
@@ -164,6 +180,6 @@ mod tests {
             println!("{}", machine);
         }
 
-        main(machines);
+        assert_eq!(7, main(machines));
     }
 }
