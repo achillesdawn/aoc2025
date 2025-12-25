@@ -12,15 +12,12 @@ fn process_machine(machine: Machine) -> usize {
 
     let mut steps = 2usize;
     let mut results = machine.masks.clone();
-    // let mut results: HashSet<u16> = HashSet::from_iter(machine.masks.clone());
 
     const MAX_DEPTH: usize = 10usize;
     let mut found = false;
 
     let span = debug_span!("proc", target = machine.state);
     let _guard = span.enter();
-
-    warn!("start");
 
     for _ in 0..MAX_DEPTH {
         results = machine
@@ -33,23 +30,18 @@ fn process_machine(machine: Machine) -> usize {
             .collect();
 
         if results.contains(&machine.state) {
+            debug!(?results, steps);
             found = true;
-
-            debug!(?results, "found");
 
             break;
         }
 
         steps += 1;
-
-        debug!(?results);
     }
 
     if !found {
-        panic!("not found in MAX_STEPS");
+        panic!("not found in {MAX_DEPTH} steps");
     }
-
-    debug!(?results, steps);
 
     steps
 }
@@ -114,6 +106,8 @@ mod tests {
 
         let machines = parse_str(&s);
 
-        main(machines);
+        let result = main(machines);
+
+        dbg!(result);
     }
 }
