@@ -1,5 +1,6 @@
-use super::Machine;
 use tracing::{error, info};
+
+use super::Machine;
 
 fn parse_state(s: &str) -> u16 {
     let mut state = 0u16;
@@ -15,6 +16,10 @@ fn parse_state(s: &str) -> u16 {
             error!(?c);
             panic!("unexpected character!")
         }
+    }
+
+    if state == 0 {
+        panic!("unexpected state");
     }
 
     state

@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use tracing::{debug, debug_span, warn};
 
 mod parse;
@@ -7,15 +6,13 @@ mod machine;
 use machine::Machine;
 
 fn process_machine(machine: Machine) -> usize {
-    // check if steps are 0 or 1
-    if machine.state == 0 {
-        return 0;
-    } else if machine.masks.contains(&machine.state) {
+    if machine.masks.contains(&machine.state) {
         return 1;
     }
 
     let mut steps = 2usize;
-    let mut results: HashSet<u16> = HashSet::from_iter(machine.masks.clone());
+    let mut results = machine.masks.clone();
+    // let mut results: HashSet<u16> = HashSet::from_iter(machine.masks.clone());
 
     const MAX_DEPTH: usize = 10usize;
     let mut found = false;
@@ -26,7 +23,7 @@ fn process_machine(machine: Machine) -> usize {
     warn!("start");
 
     for _ in 0..MAX_DEPTH {
-        let new_results: Vec<u16> = machine
+        results = machine
             .masks
             .iter()
             .flat_map(|button| {
@@ -35,13 +32,15 @@ fn process_machine(machine: Machine) -> usize {
             })
             .collect();
 
-        if new_results.contains(&machine.state) {
+        if results.contains(&machine.state) {
             found = true;
+
+            debug!(?results, "found");
+
             break;
-        } else {
-            steps += 1;
-            results.extend(new_results);
         }
+
+        steps += 1;
 
         debug!(?results);
     }
@@ -59,6 +58,8 @@ pub fn main(machines: Vec<Machine>) -> usize {
     let mut result = 0usize;
 
     for machine in machines.into_iter() {
+        println!("{}", machine);
+
         result += process_machine(machine);
     }
 
@@ -67,6 +68,8 @@ pub fn main(machines: Vec<Machine>) -> usize {
 
 #[cfg(test)]
 mod tests {
+
+    use std::fs::read_to_string;
 
     use super::parse::parse_str;
     use super::*;
@@ -100,5 +103,17 @@ mod tests {
         }
 
         assert_eq!(7, main(machines));
+    }
+
+    #[test]
+    fn with_input() {
+        init_tracing();
+
+        let s = read_to_string("/home/miguel/novaera/rust/aoc2025/src/ten/input.txt")
+            .expect("could not read ten/input.txt");
+
+        let machines = parse_str(&s);
+
+        main(machines);
     }
 }
