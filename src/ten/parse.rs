@@ -1,4 +1,4 @@
-use tracing::{error, info};
+use tracing::{debug, error, info};
 
 use super::Machine;
 
@@ -25,8 +25,22 @@ fn parse_state(s: &str) -> u16 {
     state
 }
 
-fn parse_buttons(s: &str) -> Vec<u16> {
+fn parse_joltage(s: &str) -> Vec<u16> {
     info!(s);
+
+    let (_, s) = s.split_once("{").unwrap();
+
+    let s = s.replace('}', "");
+
+    let nums: Vec<&str> = s.split(',').collect();
+
+    debug!(?nums);
+
+    nums.into_iter().flat_map(|i| i.parse()).collect()
+}
+
+fn parse_buttons(s: &str, size: usize) -> Vec<Vec<u16>> {
+    debug!(s);
 
     let buttons: Vec<Vec<u16>> = s
         .split("(")
@@ -44,21 +58,21 @@ fn parse_buttons(s: &str) -> Vec<u16> {
         })
         .collect();
 
-    info!(?buttons);
+    let mut result: Vec<Vec<u16>> = Vec::new();
 
-    let mut masks: Vec<u16> = Vec::new();
+    debug!(?buttons, size);
 
-    for button in buttons.into_iter() {
-        let mut mask = 0u16;
+    for button in buttons {
+        let mut values: Vec<u16> = vec![0u16; size];
 
-        for item in button.into_iter() {
-            mask |= 1 << item;
+        for item in button {
+            values[item as usize] = 1;
         }
 
-        masks.push(mask);
+        result.push(values);
     }
 
-    masks
+    result
 }
 
 pub fn parse_str(s: &str) -> Vec<Machine> {
@@ -76,15 +90,15 @@ pub fn parse_str(s: &str) -> Vec<Machine> {
             (first.trim(), mid.trim(), end.trim(), l)
         })
         .map(|i| {
-            let state = parse_state(i.0);
+            let joltage = parse_joltage(i.2);
 
-            let masks = parse_buttons(i.1);
+            let masks = parse_buttons(i.1, joltage.len());
 
             Machine {
-                state,
+                width: joltage.len(),
+                joltage,
                 masks,
                 s: i.3.to_owned(),
-                width: i.0.len() - 2,
             }
         })
         .collect()

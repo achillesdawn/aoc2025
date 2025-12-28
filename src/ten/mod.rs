@@ -1,58 +1,82 @@
-use tracing::{debug, debug_span, warn};
+use std::collections::HashSet;
+
+use tracing::warn;
 
 mod parse;
+pub use parse::parse_str;
 
 mod machine;
 use machine::Machine;
 
-fn process_machine(machine: Machine) -> usize {
-    if machine.masks.contains(&machine.state) {
-        return 1;
+#[derive(Debug)]
+struct State {
+    max_depth: usize,
+    solutions: HashSet<Vec<usize>>,
+    target: Vec<u16>,
+}
+
+fn recurse(
+    state: &mut State,
+    buttons: &[Vec<u16>],
+    sums: &[u16],
+    solution: &mut Vec<usize>,
+    current_depth: usize,
+) {
+    if current_depth > state.max_depth {
+        return;
     }
 
-    let mut steps = 2usize;
-    let mut results = machine.masks.clone();
+    let mut all_equal = true;
 
-    const MAX_DEPTH: usize = 10usize;
-    let mut found = false;
+    for (t, s) in state.target.iter().zip(sums) {
+        if s > t {
+            return;
+        } else if s != t {
+            all_equal = false;
+        }
+    }
 
-    let span = debug_span!("proc", target = machine.state);
-    let _guard = span.enter();
+    if all_equal {
+        // debug!(?state, ?sums, ?solution, current_depth);
+        if current_depth < state.max_depth {
+            state.max_depth = current_depth;
+            state.solutions.insert(solution[..current_depth].to_vec());
+        }
+        return;
+    }
 
-    for _ in 0..MAX_DEPTH {
-        results = machine
-            .masks
-            .iter()
-            .flat_map(|button| {
-                let temp: Vec<u16> = results.iter().map(|v| *button ^ *v).collect();
-                temp
-            })
-            .collect();
+    for (idx, button) in buttons.iter().enumerate() {
+        let new_sum: Vec<u16> = button.iter().zip(sums).map(|(i, s)| *i + *s).collect();
 
-        if results.contains(&machine.state) {
-            debug!(?results, steps);
-            found = true;
-
-            break;
+        if solution.len() < current_depth + 1 {
+            solution.push(idx);
+        } else {
+            solution[current_depth] = idx;
         }
 
-        steps += 1;
+        recurse(state, buttons, &new_sum, solution, current_depth + 1);
     }
-
-    if !found {
-        panic!("not found in {MAX_DEPTH} steps");
-    }
-
-    steps
 }
 
 pub fn main(machines: Vec<Machine>) -> usize {
     let mut result = 0usize;
 
     for machine in machines.into_iter() {
-        println!("{}", machine);
+        let mut state = State {
+            max_depth: 50,
+            solutions: HashSet::new(),
+            target: machine.joltage,
+        };
 
-        result += process_machine(machine);
+        let sums = vec![0u16; machine.width];
+
+        let mut solution = Vec::new();
+
+        recurse(&mut state, &machine.masks, &sums, &mut solution, 0);
+
+        result += state.max_depth;
+
+        warn!(?state);
     }
 
     result
@@ -90,11 +114,9 @@ mod tests {
 
         let machines = parse_str(s);
 
-        for machine in machines.iter() {
-            println!("{}", machine);
-        }
+        let result = main(machines);
 
-        assert_eq!(7, main(machines));
+        assert_eq!(33, result);
     }
 
     #[test]
