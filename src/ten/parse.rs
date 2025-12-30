@@ -36,10 +36,52 @@ fn parse_joltage(s: &str) -> Vec<u16> {
 
     debug!(?nums);
 
-    nums.into_iter().flat_map(|i| i.parse()).collect()
+    let mut result = Vec::new();
+
+    for (_, num) in nums.into_iter().enumerate() {
+        let n: u16 = num.parse().expect("expected str -> u16 conversion");
+
+        result.push(n);
+    }
+
+    result
 }
 
-fn parse_buttons(s: &str, size: usize) -> Vec<Vec<u16>> {
+fn buttons_as_vec(buttons: Vec<Vec<u16>>, size: usize) -> Vec<Vec<u16>> {
+    let mut result: Vec<Vec<u16>> = Vec::new();
+
+    debug!(?buttons, size);
+
+    for button in buttons {
+        let mut values: Vec<u16> = vec![0u16; size];
+
+        for item in button {
+            values[item as usize] = 1;
+        }
+
+        result.push(values);
+    }
+
+    result
+}
+
+fn buttons_as_int(buttons: Vec<Vec<u16>>) -> Vec<u16> {
+    let mut result: Vec<u16> = Vec::new();
+
+    for button in buttons.into_iter() {
+        let mut value = 0;
+
+        for item in button.into_iter() {
+            value |= 1 << item;
+        }
+
+        result.push(value);
+    }
+
+    result
+}
+
+fn parse_buttons(s: &str) -> Vec<Vec<u16>> {
     debug!(s);
 
     let buttons: Vec<Vec<u16>> = s
@@ -58,48 +100,72 @@ fn parse_buttons(s: &str, size: usize) -> Vec<Vec<u16>> {
         })
         .collect();
 
-    let mut result: Vec<Vec<u16>> = Vec::new();
-
-    debug!(?buttons, size);
-
-    for button in buttons {
-        let mut values: Vec<u16> = vec![0u16; size];
-
-        for item in button {
-            values[item as usize] = 1;
-        }
-
-        result.push(values);
-    }
-
-    result
+    buttons
 }
 
 pub fn parse_str(s: &str) -> Vec<Machine> {
     s.trim()
         .lines()
-        .map(|l| {
-            let first_split = l.find("] ").expect("expected ] ");
+        .map(|line| {
+            let first_split = line.find("] ").expect("expected ] ");
 
-            let (first, rest) = l.split_at(first_split + 1);
+            let (first, rest) = line.split_at(first_split + 1);
 
             let second_split = rest.find(" {").expect("expected {");
 
             let (mid, end) = rest.split_at(second_split);
 
-            (first.trim(), mid.trim(), end.trim(), l)
+            (first.trim(), mid.trim(), end.trim(), line)
         })
         .map(|i| {
             let joltage = parse_joltage(i.2);
 
-            let masks = parse_buttons(i.1, joltage.len());
+            let buttons = parse_buttons(i.1);
+
+            let buttons = buttons_as_vec(buttons, joltage.len());
 
             Machine {
-                width: joltage.len(),
                 joltage,
-                masks,
+                buttons,
                 s: i.3.to_owned(),
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    fn init_tracing() {
+        tracing_subscriber::fmt()
+            .compact()
+            .with_target(false)
+            .with_max_level(tracing::Level::DEBUG)
+            .with_test_writer()
+            .with_timer(tracing_subscriber::fmt::time::ChronoLocal::new(
+                "%H:%M:%S%.3f".to_owned(),
+            ))
+            .init();
+    }
+
+    #[test]
+    fn parse_test() {
+        init_tracing();
+
+        let s = "
+            [.##.] (3) (1,3) (2) (2,3) (0,2) (0,1) {3,5,4,7}
+            [...#.] (0,2,3,4) (2,3) (0,4) (0,1,2) (1,2,3,4) {7,5,12,7,2}
+            [.###.#] (0,1,2,3,4) (0,3,4) (0,1,2,4,5) (1,2) {10,11,11,5,10,5}
+        ";
+
+        let machines = parse_str(s);
+
+        dbg!(machines);
+
+        // let result = main(machines);
+
+        // assert_eq!(33, result);
+    }
 }
