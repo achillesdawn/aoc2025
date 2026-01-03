@@ -25,7 +25,7 @@ fn parse_state(s: &str) -> u16 {
     state
 }
 
-fn parse_joltage(s: &str) -> Vec<u16> {
+fn parse_joltage(s: &str) -> (usize, [u16; 10]) {
     info!(s);
 
     let (_, s) = s.split_once("{").unwrap();
@@ -36,24 +36,26 @@ fn parse_joltage(s: &str) -> Vec<u16> {
 
     debug!(?nums);
 
-    let mut result = Vec::new();
+    let num_len = nums.len();
 
-    for (_, num) in nums.into_iter().enumerate() {
+    let mut result = [0u16; 10];
+
+    for (i, num) in nums.into_iter().enumerate() {
         let n: u16 = num.parse().expect("expected str -> u16 conversion");
 
-        result.push(n);
+        result[i] = n;
     }
 
-    result
+    (num_len, result)
 }
 
-fn buttons_as_vec(buttons: Vec<Vec<u16>>, size: usize) -> Vec<Vec<u16>> {
-    let mut result: Vec<Vec<u16>> = Vec::new();
+fn buttons_as_vec(buttons: Vec<Vec<u16>>, size: usize) -> Vec<[u16; 10]> {
+    let mut result: Vec<[u16; 10]> = Vec::new();
 
     debug!(?buttons, size);
 
     for button in buttons {
-        let mut values: Vec<u16> = vec![0u16; size];
+        let mut values = [0u16; 10];
 
         for item in button {
             values[item as usize] = 1;
@@ -118,13 +120,14 @@ pub fn parse_str(s: &str) -> Vec<Machine> {
             (first.trim(), mid.trim(), end.trim(), line)
         })
         .map(|i| {
-            let joltage = parse_joltage(i.2);
+            let (nums_len, joltage) = parse_joltage(i.2);
 
             let buttons = parse_buttons(i.1);
 
             let buttons = buttons_as_vec(buttons, joltage.len());
 
             Machine {
+                size: nums_len,
                 joltage,
                 buttons,
                 s: i.3.to_owned(),

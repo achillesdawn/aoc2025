@@ -77,9 +77,23 @@ mod tests {
 
         let first = machines.first().unwrap();
 
-        let state = first.calculate_state(&[0, 1, 1, 1, 3, 3, 3, 4, 5, 5]);
+        let mut result = [0u16; 10];
 
-        dbg!(state);
+        first.calculate_state(&[0, 1, 1, 1, 3, 3, 3, 4, 5, 5], &mut result);
+
+        dbg!((first.size, &result[..first.size]));
+    }
+
+    #[test]
+    fn two() {
+        let s = "
+[.#.#] (0,2,3) (1,3) (2,3) (0,1,2) (0) {31,4,31,29}
+[#..#..##.#] (1,2,3,4,5,6,7,8,9) (2,5,6,7) (0,1,3,5,7,8) (0,2,3,5,6,8,9) (0,1,3,5,6,7,8,9) (4,7) (3,5,7) (4,6) (1,2,4) (0,1,2,4,5,7,8,9) {34,50,61,55,68,80,58,88,50,48}
+        ";
+
+        let machines = parse_str(s);
+
+        for machine in machines.into_iter() {}
     }
 
     #[test]
@@ -91,8 +105,8 @@ mod tests {
 
         let machines = parse_str(&s);
 
-        let result = main(machines);
+        let max = machines.iter().max_by_key(|m| m.size);
 
-        dbg!(result);
+        dbg!(max);
     }
 }
