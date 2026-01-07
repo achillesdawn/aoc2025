@@ -22,11 +22,11 @@ impl Graph {
         Self { vertices, nodes }
     }
 
-    pub fn find_starting_point(&self) -> &Node {
+    pub fn find_node(&self, node_name: &str) -> &Node {
         let (_, node) = self
             .nodes
             .iter()
-            .find(|i| i.1.name == "you")
+            .find(|i| i.1.name == node_name)
             .expect("expected a you node");
 
         node

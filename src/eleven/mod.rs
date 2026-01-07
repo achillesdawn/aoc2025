@@ -30,11 +30,13 @@ fn parse_str(s: &str) -> Graph {
 fn main(graph: Graph) -> usize {
     dbg!(&graph);
 
-    let starting_point = graph.find_starting_point();
+    let starting_point = graph.find_node("svr");
 
     let mut num_paths = 0usize;
 
     graph.travel_nodes(starting_point, &mut num_paths);
+
+    dbg!(num_paths);
 
     num_paths
 }
@@ -59,6 +61,20 @@ ggg: out
 hhh: ccc fff iii
 iii: out";
 
+    static CASE_TWO: &str = "svr: aaa bbb
+aaa: fft
+fft: ccc
+bbb: tty
+tty: ccc
+ccc: ddd eee
+ddd: hub
+hub: fff
+eee: dac
+dac: fff
+fff: ggg hhh
+ggg: out
+hhh: out";
+
     #[test]
     fn test_eleven_parse_graph() {
         let graph = parse_str(CASE_ONE);
@@ -75,6 +91,13 @@ iii: out";
         let result = main(g);
 
         assert_eq!(5, result);
+    }
+
+    #[test]
+    fn test_eleven_two() {
+        let g = parse_str(CASE_TWO);
+
+        main(g);
     }
 
     #[test]
