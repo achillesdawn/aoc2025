@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 
 use tracing::info;
 
@@ -9,6 +9,12 @@ pub struct Node {
     pub id: usize,
     pub name: String,
     pub outputs: Vec<usize>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Path<'a> {
+    node: &'a Node,
+    path: Vec<usize>,
 }
 
 #[derive(Debug)]
@@ -47,31 +53,42 @@ impl Graph {
         }
     }
 
-    pub fn travel_nodes_with_history(&self, node: &Node, travelled: &mut Vec<usize>) {
-        info!(name = node.name, id = node.id, "travel");
+    pub fn travel_to_node_with_history(
+        &self,
+        from_node: &Node,
+        to_node: &str,
+        travelled: &mut Vec<usize>,
+        num_paths: &mut usize,
+    ) {
+        let mut queue = VecDeque::new();
 
-        if node.name == "out" {
-            let path: Vec<&str> = travelled
-                .iter()
-                .map(|i| {
-                    let node = self.nodes.get(i).unwrap();
-
-                    node.name.as_str()
-                })
-                .collect();
-
-            info!(?path, "done");
-            return;
-        }
-
-        for nid in node.outputs.iter() {
+        for nid in from_node.outputs.iter() {
             let next = self.nodes.get(nid).unwrap();
 
-            travelled.push(*nid);
+            let path = Path {
+                node: next,
+                path: vec![*nid],
+            };
 
-            self.travel_nodes_with_history(next, travelled);
+            queue.push_front(path);
+        }
 
-            travelled.pop();
+        while let Some(mut path) = queue.pop_front() {
+            info!(?path);
+
+            if path.node.name == to_node {
+                info!(?path, "found");
+                return;
+            }
+
+            for nid in path.node.outputs.iter() {
+                let next = self.nodes.get(nid).unwrap();
+
+                path.node = next;
+                path.path.push(next.id);
+
+                queue.push_back(path.clone());
+            }
         }
     }
 }

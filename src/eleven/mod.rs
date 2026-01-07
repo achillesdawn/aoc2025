@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use tracing::warn;
 
 mod graph;
-use graph::create_graph;
-
-use crate::eleven::graph::Graph;
+use graph::{Graph, create_graph};
 
 pub fn parse_str(s: &str) -> Graph {
     let mut data: HashMap<String, Vec<String>> = HashMap::new();
@@ -34,9 +32,11 @@ pub fn main(graph: Graph) -> usize {
 
     let mut travelled = vec![starting_point.id];
 
-    graph.travel_nodes_with_history(starting_point, &mut travelled);
+    let mut num_paths = 0usize;
 
-    0
+    graph.travel_to_node_with_history(starting_point, "fft", &mut travelled, &mut num_paths);
+
+    num_paths
 }
 
 #[cfg(test)]
@@ -97,7 +97,9 @@ hhh: out";
 
         let g = parse_str(CASE_TWO);
 
-        main(g);
+        let result = main(g);
+
+        assert_eq!(2, result);
     }
 
     #[test]
