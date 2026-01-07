@@ -5,11 +5,12 @@
 // pub mod seven;
 // pub mod eight;
 // pub mod nine;
+// pub mod ten;
 pub mod eleven;
-pub mod ten;
 
 // pub mod grid;
-fn init_tracing() {
+
+pub fn init_tracing() {
     tracing_subscriber::fmt()
         .compact()
         .with_target(false)

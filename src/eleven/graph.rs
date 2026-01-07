@@ -13,13 +13,12 @@ pub struct Node {
 
 #[derive(Debug)]
 pub struct Graph {
-    vertices: VertexLookup,
     pub nodes: HashMap<usize, Node>,
 }
 
 impl Graph {
-    pub fn new(vertices: VertexLookup, nodes: HashMap<usize, Node>) -> Self {
-        Self { vertices, nodes }
+    pub fn new(nodes: HashMap<usize, Node>) -> Self {
+        Self { nodes }
     }
 
     pub fn find_node(&self, node_name: &str) -> &Node {
@@ -45,6 +44,34 @@ impl Graph {
             let next = self.nodes.get(nid).unwrap();
 
             self.travel_nodes(next, num_paths);
+        }
+    }
+
+    pub fn travel_nodes_with_history(&self, node: &Node, travelled: &mut Vec<usize>) {
+        info!(name = node.name, id = node.id, "travel");
+
+        if node.name == "out" {
+            let path: Vec<&str> = travelled
+                .iter()
+                .map(|i| {
+                    let node = self.nodes.get(i).unwrap();
+
+                    node.name.as_str()
+                })
+                .collect();
+
+            info!(?path, "done");
+            return;
+        }
+
+        for nid in node.outputs.iter() {
+            let next = self.nodes.get(nid).unwrap();
+
+            travelled.push(*nid);
+
+            self.travel_nodes_with_history(next, travelled);
+
+            travelled.pop();
         }
     }
 }
@@ -87,5 +114,5 @@ pub fn create_graph(data: HashMap<String, Vec<String>>) -> Graph {
         nodes.entry(*idx).and_modify(|n| n.outputs = values);
     }
 
-    Graph::new(vertices, nodes)
+    Graph::new(nodes)
 }

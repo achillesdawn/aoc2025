@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use tracing::{info, warn};
+use tracing::warn;
 
 mod graph;
 use graph::create_graph;
 
-use crate::eleven::graph::{Graph, Node};
+use crate::eleven::graph::Graph;
 
-fn parse_str(s: &str) -> Graph {
+pub fn parse_str(s: &str) -> Graph {
     let mut data: HashMap<String, Vec<String>> = HashMap::new();
 
     for line in s.lines() {
@@ -27,18 +27,16 @@ fn parse_str(s: &str) -> Graph {
     create_graph(data)
 }
 
-fn main(graph: Graph) -> usize {
+pub fn main(graph: Graph) -> usize {
     dbg!(&graph);
 
     let starting_point = graph.find_node("svr");
 
-    let mut num_paths = 0usize;
+    let mut travelled = vec![starting_point.id];
 
-    graph.travel_nodes(starting_point, &mut num_paths);
+    graph.travel_nodes_with_history(starting_point, &mut travelled);
 
-    dbg!(num_paths);
-
-    num_paths
+    0
 }
 
 #[cfg(test)]
@@ -95,6 +93,8 @@ hhh: out";
 
     #[test]
     fn test_eleven_two() {
+        init_tracing();
+
         let g = parse_str(CASE_TWO);
 
         main(g);
