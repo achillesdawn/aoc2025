@@ -85,6 +85,8 @@ iii: out";
 
         let g = parse_str(&s);
 
-        main(g);
+        let result = main(g);
+
+        dbg!(result);
     }
 }
