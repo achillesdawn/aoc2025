@@ -1,6 +1,8 @@
+use arrayvec::ArrayVec;
+
 #[derive(Debug)]
 pub struct Machine {
-    pub buttons: Vec<[u16; 10]>,
+    pub buttons: ArrayVec<[u16; 10], 10>,
     pub joltage: [u16; 10],
     pub s: String,
     pub size: usize,

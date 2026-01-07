@@ -34,34 +34,28 @@ use machine::Machine;
 //     recurse(state, states, current_depth + 1);
 // }
 
-pub fn main(machines: Vec<Machine>) -> usize {
-    for machine in machines.into_iter() {
-        // let states = vec![vec![0u16; machine.buttons.len()]];
-    }
+pub fn solve_machine(machine: Machine) {
+    let mut result = [0u16; 10];
 
-    0
+    let min = machine.joltage[..machine.size].iter().min();
+
+    let max = machine.joltage[..machine.size].iter().max();
+
+    dbg!((min, max));
+
+    // machine.calculate_state(&[0, 1, 1, 1, 3, 3, 3, 4, 5, 5], &mut result);
+
+    // dbg!(&result[..machine.size]);
 }
 
 #[cfg(test)]
 mod tests {
 
-    use super::*;
-
     use std::fs::read_to_string;
 
-    use super::parse::parse_str;
+    use crate::{init_tracing, ten::solve_machine};
 
-    fn init_tracing() {
-        tracing_subscriber::fmt()
-            .compact()
-            .with_target(false)
-            .with_max_level(tracing::Level::DEBUG)
-            .with_test_writer()
-            .with_timer(tracing_subscriber::fmt::time::ChronoLocal::new(
-                "%H:%M:%S%.3f".to_owned(),
-            ))
-            .init();
-    }
+    use super::parse::parse_str;
 
     #[test]
     fn one() {
@@ -75,13 +69,9 @@ mod tests {
 
         let machines = parse_str(s);
 
-        let first = machines.first().unwrap();
-
-        let mut result = [0u16; 10];
-
-        first.calculate_state(&[0, 1, 1, 1, 3, 3, 3, 4, 5, 5], &mut result);
-
-        dbg!((first.size, &result[..first.size]));
+        for machine in machines.into_iter() {
+            solve_machine(machine);
+        }
     }
 
     #[test]

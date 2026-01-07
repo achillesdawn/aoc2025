@@ -1,3 +1,4 @@
+use arrayvec::ArrayVec;
 use tracing::{debug, error, info};
 
 use super::Machine;
@@ -49,8 +50,8 @@ fn parse_joltage(s: &str) -> (usize, [u16; 10]) {
     (num_len, result)
 }
 
-fn buttons_as_vec(buttons: Vec<Vec<u16>>, size: usize) -> Vec<[u16; 10]> {
-    let mut result: Vec<[u16; 10]> = Vec::new();
+fn buttons_as_vec(buttons: Vec<Vec<u16>>, size: usize) -> ArrayVec<[u16; 10], 10> {
+    let mut result: ArrayVec<[u16; 10], 10> = ArrayVec::new();
 
     debug!(?buttons, size);
 
